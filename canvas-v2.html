@@ -86,7 +86,14 @@
             color: var(--cor-texto-secundario);
         }
 
-        .logo-link {
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .logo-link,
+        .pdf-btn {
             font-size: 0.85rem;
             color: var(--cor-secundaria);
             text-decoration: none;
@@ -95,11 +102,26 @@
             border-radius: 50px;
             background: rgba(9, 132, 227, 0.1);
             transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .logo-link:hover {
+        .pdf-btn {
+            background: rgba(214, 48, 49, 0.1);
+            color: #d63031;
+        }
+
+        .logo-link:hover,
+        .pdf-btn:hover {
             background: rgba(9, 132, 227, 0.2);
             transform: translateY(-2px);
+        }
+
+        .pdf-btn:hover {
+            background: rgba(214, 48, 49, 0.2);
         }
 
         /* ===============================================
@@ -292,6 +314,87 @@
 
         .modal-overlay.active .modal {
             transform: scale(1) translateY(0);
+        }
+
+        /* Modal PDF */
+        .modal-pdf {
+            background: white;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            box-shadow: var(--sombra-modal);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-pdf-header {
+            background: linear-gradient(135deg, #d63031 0%, #e17055 100%);
+            padding: 1rem 1.5rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-pdf-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-pdf-content {
+            flex: 1;
+            position: relative;
+            background: #525252;
+        }
+
+        .modal-pdf-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .pdf-fallback {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 1rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .pdf-fallback-icon {
+            font-size: 4rem;
+            opacity: 0.5;
+        }
+
+        .pdf-fallback-text {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .pdf-download-btn {
+            background: white;
+            color: #d63031;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .modal-header {
@@ -597,15 +700,20 @@
                 <span class="subtitle">Sistema de Análise em Saúde Integrada</span>
             </div>
         </a>
-        <a href="https://sasi.net.br" class="logo-link" target="_blank">
-            🌐 sasi.net.br
-        </a>
+        <div class="header-actions">
+            <button class="pdf-btn" onclick="openPdfModal()">
+                📄 Ver Documento PDF
+            </button>
+            <a href="https://sasi.net.br" class="logo-link" target="_blank">
+                🌐 sasi.net.br
+            </a>
+        </div>
     </header>
 
     <!-- HERO -->
     <section class="hero">
         <h2 class="hero-title">Canvas de Desenvolvimento de Produto</h2>
-        <p class="hero-subtitle">Clique em qualquer bloco para explorar detalhes | Use as setas ou números (1-9) para navegar</p>
+        <p class="hero-subtitle">Clique em qualquer bloco para explorar detalhes | Use as setas ou números (1-9) para navegar | Tecla [P] para PDF</p>
     </section>
 
     <!-- CANVAS GRID -->
@@ -782,6 +890,33 @@
                 <div class="keyboard-hint">
                     <span><kbd class="kbd">←</kbd> <kbd class="kbd">→</kbd> Navegar</span>
                     <span><kbd class="kbd">ESC</kbd> Fechar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PDF -->
+    <div class="modal-overlay" id="pdfModalOverlay">
+        <div class="modal-pdf">
+            <div class="modal-pdf-header">
+                <div class="modal-pdf-title">
+                    <span>📄</span>
+                    <span>Desenvolvimento de Produto - SASI</span>
+                </div>
+                <button class="modal-close" onclick="closePdfModal()" aria-label="Fechar">×</button>
+            </div>
+            <div class="modal-pdf-content" id="pdfContent">
+                <iframe id="pdfIframe" src="" title="Documento PDF do SASI"></iframe>
+                <div class="pdf-fallback" id="pdfFallback" style="display: none;">
+                    <div class="pdf-fallback-icon">📄</div>
+                    <div class="pdf-fallback-text">
+                        Seu navegador não suporta visualização de PDF incorporado.<br>
+                        Clique no botão abaixo para fazer o download do documento.
+                    </div>
+                    <a href="Desenvolvimento de Produto - SASI (1).pdf" download class="pdf-download-btn">
+                        <span>⬇️</span>
+                        <span>Baixar PDF</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -1157,29 +1292,91 @@
             }
         });
 
-        // Navegação por teclado
+        // ===============================================
+        // FUNÇÕES DO MODAL PDF
+        // ===============================================
+        function openPdfModal() {
+            const pdfOverlay = document.getElementById('pdfModalOverlay');
+            const pdfIframe = document.getElementById('pdfIframe');
+            const pdfFallback = document.getElementById('pdfFallback');
+            
+            // Define o caminho do PDF
+            const pdfPath = 'Desenvolvimento de Produto - SASI (1).pdf';
+            
+            // Tenta carregar o PDF no iframe
+            pdfIframe.src = pdfPath;
+            
+            // Detecta se o iframe conseguiu carregar
+            pdfIframe.onload = function() {
+                // PDF carregado com sucesso
+                pdfFallback.style.display = 'none';
+            };
+            
+            pdfIframe.onerror = function() {
+                // Erro ao carregar - mostra fallback
+                pdfFallback.style.display = 'flex';
+            };
+            
+            // Mostra o modal
+            pdfOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePdfModal() {
+            const pdfOverlay = document.getElementById('pdfModalOverlay');
+            pdfOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            // Limpa o iframe para economizar recursos
+            setTimeout(() => {
+                document.getElementById('pdfIframe').src = '';
+            }, 300);
+        }
+
+        // Event listener para fechar modal PDF ao clicar no overlay
+        document.getElementById('pdfModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePdfModal();
+            }
+        });
+
+        // ===============================================
+        // NAVEGAÇÃO POR TECLADO
+        // ===============================================
         document.addEventListener('keydown', function(e) {
             const overlay = document.getElementById('modalOverlay');
+            const pdfOverlay = document.getElementById('pdfModalOverlay');
             const isModalOpen = overlay.classList.contains('active');
+            const isPdfModalOpen = pdfOverlay.classList.contains('active');
             
-            // ESC para fechar modal
-            if (e.key === 'Escape' && isModalOpen) {
-                closeModal();
+            // ESC para fechar qualquer modal
+            if (e.key === 'Escape') {
+                if (isModalOpen) {
+                    closeModal();
+                }
+                if (isPdfModalOpen) {
+                    closePdfModal();
+                }
             }
             
-            // Seta esquerda para anterior
-            if (e.key === 'ArrowLeft' && isModalOpen && currentCard > 1) {
+            // Seta esquerda para anterior (apenas no modal de cards)
+            if (e.key === 'ArrowLeft' && isModalOpen && !isPdfModalOpen && currentCard > 1) {
                 navigateModal(-1);
             }
             
-            // Seta direita para próximo
-            if (e.key === 'ArrowRight' && isModalOpen && currentCard < 9) {
+            // Seta direita para próximo (apenas no modal de cards)
+            if (e.key === 'ArrowRight' && isModalOpen && !isPdfModalOpen && currentCard < 9) {
                 navigateModal(1);
             }
             
-            // Números 1-9 para abrir cards específicos
-            if (!isModalOpen && e.key >= '1' && e.key <= '9') {
+            // Números 1-9 para abrir cards específicos (apenas se nenhum modal estiver aberto)
+            if (!isModalOpen && !isPdfModalOpen && e.key >= '1' && e.key <= '9') {
                 openModal(parseInt(e.key));
+            }
+            
+            // Tecla 'P' para abrir PDF (apenas se nenhum modal estiver aberto)
+            if (!isModalOpen && !isPdfModalOpen && (e.key === 'p' || e.key === 'P')) {
+                openPdfModal();
             }
         });
 
